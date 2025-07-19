@@ -2,7 +2,7 @@
 # Copyright 2025 Emil-18
 # An add-on that allows you to find text with the review cursor
 # Apparently, if you call addonHandler.initTranslation, the line (_) function can't access NVDA's own translations.
-So asign it to a variable before calling initTranslation
+#So asign it to a variable before calling initTranslation
 translate = _
 import addonHandler
 addonHandler.initTranslation()
