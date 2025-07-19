@@ -51,9 +51,12 @@ def findManualy(reviewPosition, text, caseSensitive, reverse):
 def find(obj, reviewPosition, text, caseSensitive, reverse, moveCaret):
 	
 	oldReview = reviewPosition.copy()
+	res = False
 	try:
 		res = reviewPosition.find(text, caseSensitive = caseSensitive, reverse = reverse)
 	except:
+		pass
+	if not res:
 		res = findManualy(reviewPosition, text, caseSensitive, reverse)
 	if not res:
 		# Translators: Message when no text is found
