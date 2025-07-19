@@ -1,3 +1,4 @@
+<div lang = "nb_no">
 # lesemarkør finn
 
 * NVDA -kompatibilitet: 2024.4 og utover.
@@ -23,3 +24,4 @@ Alle innstillingene er i finn dialogboksen for lesemarkør
 ### v1.0
 
 * første utgivelse
+</div>
