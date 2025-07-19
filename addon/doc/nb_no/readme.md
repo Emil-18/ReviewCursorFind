@@ -1,7 +1,7 @@
 # lesemarkør finn
 
 * NVDA -kompatibilitet: 2024.4 og utover.
-* Last ned: [stabil versjon] (https://github.com/emil-18/reviewcursorfind/releases/download/v1.0/reviewcursorfind-1.0.nvda-addon).
+* Last ned: [stabil versjon](https://github.com/emil-18/reviewcursorfind/releases/download/v1.0/reviewcursorfind-1.0.nvda-addon).
 
 Dette tillegget legger til Find-funksjonalitet for lesemarkøren, som Find (NVDA+Control+F) gjør i nett modus.
 
