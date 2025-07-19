@@ -1,6 +1,9 @@
 # coding: utf-8
 # Copyright 2025 Emil-18
 # An add-on that allows you to find text with the review cursor
+# Apparently, if you call addonHandler.initTranslation, the line (_) function can't access NVDA's own translations.
+So asign it to a variable before calling initTranslation
+translate = _
 import addonHandler
 addonHandler.initTranslation()
 import api
@@ -14,7 +17,7 @@ import wx
 from scriptHandler import script
 from gui.settingsDialogs import SettingsDialog
 from speech.speech import speakTextInfo, cancelSpeech
-translate = _
+
 lastText = ""
 def findManualy(reviewPosition, text, caseSensitive, reverse):
 	info = reviewPosition.copy()
@@ -94,7 +97,7 @@ class FindDialog(SettingsDialog):
 		label = translate("Type the text you wish to find")
 		self.findText = helper.addLabeledControl(label, wx.TextCtrl,)
 		self.findText.SetValue(lastText)
-		label = translate("Case sensitive")
+		label = translate("Case &sensitive")
 		self.caseSensitive = helper.addItem(wx.CheckBox(self, label = label))
 		self.caseSensitive.SetValue(config.conf["reviewCursorFind"]["caseSensitive"])
 		# Translators: a label for a check box
