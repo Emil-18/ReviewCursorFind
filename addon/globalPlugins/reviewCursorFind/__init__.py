@@ -11,6 +11,7 @@ import config
 import controlTypes
 import globalPluginHandler
 import gui
+import re
 import textInfos
 import ui
 import wx
@@ -82,7 +83,8 @@ def find(obj, reviewPosition, text, caseSensitive, reverse, moveCaret):
 	speakTextInfo(info, reason = controlTypes.OutputReason.CARET)
 spec = {
 	"caseSensitive": "boolean(default=False)",
-	"moveCaret": "boolean(default=False)"
+	"moveCaret": "boolean(default=False)",
+	"regex": "boolean(default=False)"
 }
 config.conf.spec["reviewCursorFind"] = spec
 class FindDialog(SettingsDialog):
@@ -103,6 +105,10 @@ class FindDialog(SettingsDialog):
 		label = translate("Case &sensitive")
 		self.caseSensitive = helper.addItem(wx.CheckBox(self, label = label))
 		self.caseSensitive.SetValue(config.conf["reviewCursorFind"]["caseSensitive"])
+		# Translators: The label for a check box
+		label = _("Use Regular expressions when searching")
+		self.regex = helper.addItem(wx.CheckBox(self, label = label))
+		self.regex.SetValue(config.conf["reviewCursorFind"]["regex"])
 		# Translators: a label for a check box
 		label = _("Move caret (if possible)")
 		self.moveCaret = helper.addItem(wx.CheckBox(self, label = label))
@@ -110,9 +116,18 @@ class FindDialog(SettingsDialog):
 	def postInit(self):
 		self.findText.SetFocus()
 	def onOk(self, *args, **kwargs):
+		if self.regex.GetValue():
+			try:
+				re.compile(self.findText.GetValue())
+			except re.error:
+				# Translators: The message reported when the regular expression entered is invalid
+				message = _("Invalid regular expression")
+				ui.message(message)
+				return
 		global lastText
 		lastText = self.findText.GetValue()
 		config.conf["reviewCursorFind"]["caseSensitive"] = self.caseSensitive.GetValue()
+		config.conf["reviewCursorFind"]["regex"] = self.regex.GetValue
 		config.conf["reviewCursorFind"]["moveCaret"] = self.moveCaret.GetValue()
 		
 		wx.CallLater(500, find, self.obj, self.reviewPosition, lastText, self.caseSensitive.GetValue(), self.reverse, self.moveCaret.GetValue())
