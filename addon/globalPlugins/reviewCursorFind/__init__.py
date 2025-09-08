@@ -15,11 +15,74 @@ import re
 import textInfos
 import ui
 import wx
+from NVDAObjects import NVDAObject, behaviors
 from scriptHandler import script
 from gui.settingsDialogs import SettingsDialog
 from speech.speech import speakTextInfo, cancelSpeech
+def navigatorToFocus():
+	nav = api.getNavigatorObject()
+	focus = api.getFocusObject()
+	if nav != focus:
+		api.setNavigatorObject(focus)
+class Find(NVDAObject):
+		
+	@script(
+		# Translators: the description for a script
+		description = _("Finds a text string from the review cursor position. Moves the navigator object to the object with focus first"),
+		gesture = "kb:nvda+control+f"
+	)
+	def script_find(self, gesture, reverse = False):
+		navigatorToFocus()
+		reviewPosition = api.getReviewPosition().copy()
+		gui.mainFrame.popupSettingsDialog(FindDialog, reviewPosition = reviewPosition, reverse = reverse)
+	@script(
+		# Translators: the description for a script
+		description = _("Moves the review cursor to the next Occurrence of previously entered search text. Moves the navigator object to the object with focus first"),
+		gesture = "kb:NVDA+f3"
+	)
+	def script_findNext(self, gesture):
+		navigatorToFocus()
+		if lastText:
+			find(None, api.getReviewPosition(), lastText, config.conf["reviewCursorFind"]["caseSensitive"], False, config.conf["reviewCursorFind"]["moveCaret"])
+			return
+		self.script_find(gesture)
+	@script(
+		# Translators: the description for a script
+		description = _("Moves the review cursor to the previous Occurrence of previously entered search text. Moves the navigator object to the object with focus first"),
+		gesture = "kb:NVDA+shift+F3"
+	)
+	def script_findPrevious(self, gesture):
+		navigatorToFocus()
+		if lastText:
+			find(None, api.getReviewPosition(), lastText, config.conf["reviewCursorFind"]["caseSensitive"], True, config.conf["reviewCursorFind"]["moveCaret"])
+			return
+		self.script_find(gesture, reverse = True)
 
 lastText = ""
+def findUsingRegex(reviewPosition, text, caseSensitive, reverse):
+	info = reviewPosition.copy()
+	if reverse:
+		res = info.move(textInfos.UNIT_CHARACTER, -1)
+		if not res:
+			return(False)
+		expandableInfo = info.copy()
+		expandableInfo.move(textInfos.UNIT_STORY, -1, endPoint = "start")
+		found = list(re.finditer(text, expandableInfo.text, re.IGNORECASE if not caseSensitive else 0))
+		if not found:
+			return(False)
+		reviewPosition.expand(textInfos.UNIT_STORY)
+		reviewPosition.collapse()
+		res = reviewPosition.move(textInfos.UNIT_CHARACTER, found[-1].start())
+		return(True)
+	res = info.move(textInfos.UNIT_CHARACTER, 1)
+	if not res:
+		return(False)
+	info.move(textInfos.UNIT_STORY, 1, endPoint = "end")
+	found = re.search(text, info.text, re.IGNORECASE if not caseSensitive else 0)
+	if not found:
+		return(False)
+	reviewPosition.move(textInfos.UNIT_CHARACTER, found.start()+1)
+	return(True)
 def findManualy(reviewPosition, text, caseSensitive, reverse):
 	info = reviewPosition.copy()
 	if not caseSensitive:
@@ -53,12 +116,15 @@ def find(obj, reviewPosition, text, caseSensitive, reverse, moveCaret):
 	
 	oldReview = reviewPosition.copy()
 	res = False
-	try:
-		res = reviewPosition.find(text, caseSensitive = caseSensitive, reverse = reverse)
-	except:
-		pass
+	if config.conf["reviewCursorFind"]["regex"]:
+		res = findUsingRegex(reviewPosition, text, caseSensitive, reverse)
 	if not res:
-		res = findManualy(reviewPosition, text, caseSensitive, reverse)
+		try:
+			res = reviewPosition.find(text, caseSensitive = caseSensitive, reverse = reverse)
+		except:
+			pass
+		if not res:
+			res = findManualy(reviewPosition, text, caseSensitive, reverse)
 	if not res:
 		# Translators: Message when no text is found
 		message = _("Not found")
@@ -127,7 +193,7 @@ class FindDialog(SettingsDialog):
 		global lastText
 		lastText = self.findText.GetValue()
 		config.conf["reviewCursorFind"]["caseSensitive"] = self.caseSensitive.GetValue()
-		config.conf["reviewCursorFind"]["regex"] = self.regex.GetValue
+		config.conf["reviewCursorFind"]["regex"] = self.regex.GetValue()
 		config.conf["reviewCursorFind"]["moveCaret"] = self.moveCaret.GetValue()
 		
 		wx.CallLater(500, find, self.obj, self.reviewPosition, lastText, self.caseSensitive.GetValue(), self.reverse, self.moveCaret.GetValue())
@@ -163,3 +229,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			find(None, api.getReviewPosition(), lastText, config.conf["reviewCursorFind"]["caseSensitive"], True, config.conf["reviewCursorFind"]["moveCaret"])
 			return
 		self.script_find(gesture, reverse = True)
+	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
+		for i in clsList:
+			if issubclass(i, behaviors.EditableTextBase) or isinstance(obj, behaviors.EditableTextBase):
+				clsList.insert(0, Find)
+				break
