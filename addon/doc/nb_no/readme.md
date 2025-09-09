@@ -1,5 +1,6 @@
 <div lang = "nb_no">
-# lesemarkør finn
+
+`# lesemarkør finn
 
 * NVDA -kompatibilitet: 2024.4 og utover.
 * Last ned: [stabil versjon](https://github.com/emil-18/reviewcursorfind/releases/download/v1.1/reviewcursorfind-1.1.nvda-addon).
