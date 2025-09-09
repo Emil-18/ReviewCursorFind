@@ -134,6 +134,8 @@ def find(obj, reviewPosition, text, caseSensitive, reverse, moveCaret):
 			reviewPosition.updateCaret()
 		except:
 			pass
+	# In some implementations, TextInfo.find expands the textInfo, so collapse it just in case
+	reviewPosition.collapse()
 	api.setReviewPosition(reviewPosition)
 	info = reviewPosition.copy()
 	lineInfo = info.copy()
