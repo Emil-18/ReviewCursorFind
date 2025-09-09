@@ -64,26 +64,24 @@ def findUsingRegex(reviewPosition, text, caseSensitive, reverse):
 	if reverse:
 		res = info.move(textInfos.UNIT_CHARACTER, -1)
 		if not res:
-			return(False)
+			return
 		expandableInfo = info.copy()
 		expandableInfo.move(textInfos.UNIT_STORY, -1, endPoint = "start")
 		found = list(re.finditer(text, expandableInfo.text, re.IGNORECASE if not caseSensitive else 0))
 		if not found:
-			return(False)
-		reviewPosition.expand(textInfos.UNIT_STORY)
-		reviewPosition.collapse()
-		res = reviewPosition.move(textInfos.UNIT_CHARACTER, found[-1].start())
-		return(True)
+			return
+		return(found[-1].group())
 	res = info.move(textInfos.UNIT_CHARACTER, 1)
 	if not res:
-		return(False)
+		return
 	info.move(textInfos.UNIT_STORY, 1, endPoint = "end")
 	found = re.search(text, info.text, re.IGNORECASE if not caseSensitive else 0)
 	if not found:
-		return(False)
-	reviewPosition.move(textInfos.UNIT_CHARACTER, found.start()+1)
-	return(True)
+		return
+	return(found.group())
 def findManualy(reviewPosition, text, caseSensitive, reverse):
+	if not text:
+		return(False)
 	info = reviewPosition.copy()
 	if not caseSensitive:
 		text = text.lower()
@@ -117,14 +115,14 @@ def find(obj, reviewPosition, text, caseSensitive, reverse, moveCaret):
 	oldReview = reviewPosition.copy()
 	res = False
 	if config.conf["reviewCursorFind"]["regex"]:
-		res = findUsingRegex(reviewPosition, text, caseSensitive, reverse)
+		text = findUsingRegex(reviewPosition, text, caseSensitive, reverse)
+		caseSensitive = True
+	try:
+		res = reviewPosition.find(text, caseSensitive = caseSensitive, reverse = reverse)
+	except:
+		pass
 	if not res:
-		try:
-			res = reviewPosition.find(text, caseSensitive = caseSensitive, reverse = reverse)
-		except:
-			pass
-		if not res:
-			res = findManualy(reviewPosition, text, caseSensitive, reverse)
+		res = findManualy(reviewPosition, text, caseSensitive, reverse)
 	if not res:
 		# Translators: Message when no text is found
 		message = _("Not found")
