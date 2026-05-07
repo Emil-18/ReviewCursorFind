@@ -9,6 +9,7 @@ addonHandler.initTranslation()
 import api
 import config
 import controlTypes
+import globalCommands
 import globalPluginHandler
 import gui
 import re
@@ -25,7 +26,7 @@ def navigatorToFocus():
 	if nav != focus:
 		api.setNavigatorObject(focus)
 class Find(NVDAObject):
-		
+	scriptCategory = globalCommands.SCRCAT_TEXTREVIEW
 	@script(
 		# Translators: the description for a script
 		description = _("Finds a text string from the review cursor position. Moves the navigator object to the object with focus first"),
@@ -67,7 +68,7 @@ def findUsingRegex(reviewPosition, text, caseSensitive, reverse):
 			return
 		expandableInfo = info.copy()
 		expandableInfo.move(textInfos.UNIT_STORY, -1, endPoint = "start")
-		found = list(re.finditer(text, expandableInfo.text, re.IGNORECASE if not caseSensitive else 0))
+		found = list(re.finditer(text, expandableInfo.text, (re.IGNORECASE if not caseSensitive else 0)+re.MULTILINE))
 		if not found:
 			return
 		return(found[-1].group())
@@ -75,7 +76,8 @@ def findUsingRegex(reviewPosition, text, caseSensitive, reverse):
 	if not res:
 		return
 	info.move(textInfos.UNIT_STORY, 1, endPoint = "end")
-	found = re.search(text, info.text, re.IGNORECASE if not caseSensitive else 0)
+	found = re.search(text, info.text, (re.IGNORECASE if not caseSensitive else 0
+)+re.MULTILINE)
 	if not found:
 		return
 	return(found.group())
@@ -200,7 +202,7 @@ class FindDialog(SettingsDialog):
 		super(FindDialog, self).onOk(*args, **kwargs)
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
-	
+	scriptCategory = globalCommands.SCRCAT_TEXTREVIEW
 	@script(
 		# Translators: the description for a script
 		description = _("Finds a text string from the review cursor position"),
