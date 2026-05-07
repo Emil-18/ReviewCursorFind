@@ -3,7 +3,7 @@
 `# lesemarkør finn
 
 * NVDA -kompatibilitet: 2024.4 og utover.
-* Last ned: [stabil versjon](https://github.com/emil-18/reviewcursorfind/releases/download/v1.1/reviewcursorfind-1.1.nvda-addon).
+* Last ned: [stabil versjon](https://github.com/emil-18/reviewcursorfind/releases/download/v1.1.1/reviewcursorfind-1.1.1.nvda-addon).
 
 Dette tillegget legger til finn-funksjonalitet for lesemarkøren, som finn (NVDA+Control+F) gjør i nett modus. Du kan finne hvilken som helst tekst tilgjengelig med lesemarkør navigasjonskommandoene (numerisk 6, numerisk 9, og så vidre), før du opnet dialogen, For eksempel hvis lesemarkøren er i et dokument og du åpner dialogen, vil teksten i det dokumentet bli søkt etter
 
@@ -32,6 +32,10 @@ Alle innstillingene er i finn dialogboksen for lesemarkør
 * Flytt innsettingspunktet avkryssingsboks: Hvis denne er krysset av, flyttes innsettingspunktet med lesemarkøren når du søker
 
 ## forandringslog
+### v1.1.1
+
+* Lagt til kompatibilitet med NVDA 2026.1
+* flyttet tilleggs gestene til tekst lesnings kategorien i indatagester dialogen
 
 ### v1.1
 
