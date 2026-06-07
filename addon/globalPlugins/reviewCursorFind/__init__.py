@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright 2025 Emil-18
+# Copyright 2025-2026 Emil-18
 # An add-on that allows you to find text with the review cursor
 # Apparently, if you call addonHandler.initTranslation, the line (_) function can't access NVDA's own translations.
 #So asign it to a variable before calling initTranslation
@@ -15,11 +15,19 @@ import gui
 import re
 import textInfos
 import ui
+import versionInfo
 import wx
 from NVDAObjects import NVDAObject, behaviors
 from scriptHandler import script
 from gui.settingsDialogs import SettingsDialog
 from speech.speech import speakTextInfo, cancelSpeech
+# NVDA 2026 and onwerds has the regex module built in.
+# Regex adds support for lookbehinds with none fixed string length, as well as fuzzy searching
+# as some functions in re and regex has builtin functions as the same name:
+if versionInfo.version_year >= 2026:
+	import regex as re
+else:
+	import re
 def navigatorToFocus():
 	nav = api.getNavigatorObject()
 	focus = api.getFocusObject()
@@ -60,6 +68,37 @@ class Find(NVDAObject):
 		self.script_find(gesture, reverse = True)
 
 lastText = ""
+def findWithRegexAndMove(reviewPosition, text, caseSensitive, reverse, shouldReportFoundText = False):
+	expandableReviewPosition = reviewPosition.copy()
+	if reverse:
+		tempReviewPosition = reviewPosition.copy()
+		res = tempReviewPosition.move(textInfos.UNIT_CHARACTER, -1)
+		if not res:
+			return(False)
+		expandableReviewPosition.move(textInfos.UNIT_STORY, -1, endPoint = "start")
+		found = [*re.finditer(text, expandableReviewPosition.text, (re.IGNORECASE if not caseSensitive else 0) + re.MULTILINE)]
+		if not found:
+			return(False)
+		found = found[-1]
+		movableReviewPosition = expandableReviewPosition.copy()
+		movableReviewPosition = movableReviewPosition.moveToCodepointOffset(found.start())
+		reviewPosition.setEndPoint(movableReviewPosition, "startToStart")
+		
+	else:
+		res = expandableReviewPosition.move(textInfos.UNIT_CHARACTER, 1)
+		if not res:
+			return(False)
+		expandableReviewPosition.move(textInfos.UNIT_STORY, 1, endPoint = "end")
+		found = re.search(text, expandableReviewPosition.text, (re.IGNORECASE if not caseSensitive else 0) + re.MULTILINE)
+		if not found:
+			return(False)
+		movableReviewPosition = expandableReviewPosition.copy()
+		movableReviewPosition = movableReviewPosition.moveToCodepointOffset(found.start())
+		reviewPosition.setEndPoint(movableReviewPosition, "startToStart")
+	endInfo = None
+	if shouldReportFoundText:
+		endInfo = expandableReviewPosition.moveToCodepointOffset(found.end())
+	return((movableReviewPosition, endInfo))
 def findUsingRegex(reviewPosition, text, caseSensitive, reverse):
 	info = reviewPosition.copy()
 	if reverse:
@@ -113,18 +152,24 @@ def findManualy(reviewPosition, text, caseSensitive, reverse):
 # TextInfo.obj is stored as a weak reference for some reason, so that if TextInfo.obj is the only variable pointing to obj, obj will be deleted.
 # So store obj as its own variable.
 def find(obj, reviewPosition, text, caseSensitive, reverse, moveCaret):
-	
+	wasFoundWithRegex = False
+	shouldReportFoundText = config.conf["reviewCursorFind"]["shouldReportFoundText"]
 	oldReview = reviewPosition.copy()
 	res = False
 	if config.conf["reviewCursorFind"]["regex"]:
-		text = findUsingRegex(reviewPosition, text, caseSensitive, reverse)
-		caseSensitive = True
-	try:
-		res = reviewPosition.find(text, caseSensitive = caseSensitive, reverse = reverse)
-	except:
-		pass
-	if not res:
-		res = findManualy(reviewPosition, text, caseSensitive, reverse)
+		if config.conf["reviewCursorFind"]["trueRegex"]:
+			res = findWithRegexAndMove(reviewPosition, text, caseSensitive, reverse, shouldReportFoundText = shouldReportFoundText)
+			wasFoundWithRegex = True
+		else:
+			text = findUsingRegex(reviewPosition, text, caseSensitive, reverse)
+			caseSensitive = True
+	if not wasFoundWithRegex:
+		try:
+			res = reviewPosition.find(text, caseSensitive = caseSensitive, reverse = reverse)
+		except:
+			pass
+		if not res:
+			res = findManualy(reviewPosition, text, caseSensitive, reverse)
 	if not res:
 		# Translators: Message when no text is found
 		message = _("Not found")
@@ -140,19 +185,24 @@ def find(obj, reviewPosition, text, caseSensitive, reverse, moveCaret):
 	reviewPosition.collapse()
 	api.setReviewPosition(reviewPosition)
 	info = reviewPosition.copy()
-	lineInfo = info.copy()
-	lineInfo.expand(textInfos.UNIT_LINE)
-	oldReview.expand(textInfos.UNIT_LINE)
-	if lineInfo == oldReview:
-		info.move(textInfos.UNIT_LINE, 1, endPoint = "end")
+	if shouldReportFoundText and isinstance(res, tuple):
+		info.setEndPoint(res[1], "endToStart")
 	else:
-		info.expand(textInfos.UNIT_LINE)
+		lineInfo = info.copy()
+		lineInfo.expand(textInfos.UNIT_LINE)
+		oldReview.expand(textInfos.UNIT_LINE)
+		if lineInfo == oldReview:
+			info.move(textInfos.UNIT_LINE, 1, endPoint = "end")
+		else:
+			info.expand(textInfos.UNIT_LINE)
 	cancelSpeech()
 	speakTextInfo(info, reason = controlTypes.OutputReason.CARET)
 spec = {
 	"caseSensitive": "boolean(default=False)",
 	"moveCaret": "boolean(default=False)",
-	"regex": "boolean(default=False)"
+	"regex": "boolean(default=False)",
+	"trueRegex": "boolean(default=True)",
+	"shouldReportFoundText": "boolean(default=False)"
 }
 config.conf.spec["reviewCursorFind"] = spec
 class FindDialog(SettingsDialog):
@@ -165,6 +215,14 @@ class FindDialog(SettingsDialog):
 		self.obj = reviewPosition.obj
 		self.text = text
 		self.reverse = reverse
+	def onRegexChange(self, evt):
+		selection = evt.GetSelection()
+		self.trueRegex.Enable(selection)
+		self.shouldReportFoundText.Enable(selection and self.trueRegex.GetValue())
+	def onTrueRegexChange(self, evt):
+		selection = evt.GetSelection()
+		self.shouldReportFoundText.Enable(selection and self.regex.GetValue())
+	
 	def makeSettings(self, settingsSizer):
 		helper = gui.guiHelper.BoxSizerHelper(self, sizer = settingsSizer)
 		label = translate("Type the text you wish to find")
@@ -177,6 +235,18 @@ class FindDialog(SettingsDialog):
 		label = _("Use Regular expressions when searching")
 		self.regex = helper.addItem(wx.CheckBox(self, label = label))
 		self.regex.SetValue(config.conf["reviewCursorFind"]["regex"])
+		self.regex.Bind(wx.EVT_CHECKBOX, self.onRegexChange)
+		# Translators: A label for a check box
+		label = _("Support all regular expressions. Turn off if you experience problems using the add-on, such as lag or the review cursor moving to the wrong text")
+		self.trueRegex = helper.addItem(wx.CheckBox(self, label = label))
+		self.trueRegex.SetValue(config.conf["reviewCursorFind"]["trueRegex"])
+		self.trueRegex.Enable(config.conf["reviewCursorFind"]["regex"])
+		self.trueRegex.Bind(wx.EVT_CHECKBOX, self.onTrueRegexChange)
+		# Translators: A label for a check box
+		label = _("speak the found text, instead of the line where the review cursor ends up")
+		self.shouldReportFoundText = helper.addItem(wx.CheckBox(self, label = label))
+		self.shouldReportFoundText.SetValue(config.conf["reviewCursorFind"]["shouldReportFoundText"])
+		self.shouldReportFoundText.Enable(self.regex.GetValue() and self.trueRegex.GetValue())
 		# Translators: a label for a check box
 		label = _("Move caret (if possible)")
 		self.moveCaret = helper.addItem(wx.CheckBox(self, label = label))
@@ -196,6 +266,8 @@ class FindDialog(SettingsDialog):
 		lastText = self.findText.GetValue()
 		config.conf["reviewCursorFind"]["caseSensitive"] = self.caseSensitive.GetValue()
 		config.conf["reviewCursorFind"]["regex"] = self.regex.GetValue()
+		config.conf["reviewCursorFind"]["trueRegex"] = self.trueRegex.GetValue()
+		config.conf["reviewCursorFind"]["shouldReportFoundText"] = self.shouldReportFoundText.GetValue()
 		config.conf["reviewCursorFind"]["moveCaret"] = self.moveCaret.GetValue()
 		
 		wx.CallLater(500, find, self.obj, self.reviewPosition, lastText, self.caseSensitive.GetValue(), self.reverse, self.moveCaret.GetValue())
