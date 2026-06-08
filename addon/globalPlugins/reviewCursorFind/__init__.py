@@ -12,21 +12,19 @@ import controlTypes
 import globalCommands
 import globalPluginHandler
 import gui
-import re
 import textInfos
 import ui
-import versionInfo
 import wx
 from NVDAObjects import NVDAObject, behaviors
 from scriptHandler import script
 from gui.settingsDialogs import SettingsDialog
 from speech.speech import speakTextInfo, cancelSpeech
-# NVDA 2026 and onwerds has the regex module built in.
+# NVDA 2026.2 and onwerds has the regex module built in.
 # Regex adds support for lookbehinds with none fixed string length, as well as fuzzy searching
-# as some functions in re and regex has builtin functions as the same name:
-if versionInfo.version_year >= 2026:
+# as some functions in re and regex has the same name as some python builtin functions:
+try:
 	import regex as re
-else:
+except:
 	import re
 def navigatorToFocus():
 	nav = api.getNavigatorObject()
@@ -81,7 +79,10 @@ def findWithRegexAndMove(reviewPosition, text, caseSensitive, reverse, shouldRep
 			return(False)
 		found = found[-1]
 		movableReviewPosition = expandableReviewPosition.copy()
-		movableReviewPosition = movableReviewPosition.moveToCodepointOffset(found.start())
+		try:
+			movableReviewPosition = movableReviewPosition.moveToCodepointOffset(found.start())
+		except:
+			return(False)
 		reviewPosition.setEndPoint(movableReviewPosition, "startToStart")
 		
 	else:
@@ -93,7 +94,10 @@ def findWithRegexAndMove(reviewPosition, text, caseSensitive, reverse, shouldRep
 		if not found:
 			return(False)
 		movableReviewPosition = expandableReviewPosition.copy()
-		movableReviewPosition = movableReviewPosition.moveToCodepointOffset(found.start())
+		try:
+			movableReviewPosition = movableReviewPosition.moveToCodepointOffset(found.start())
+		except:
+			return(False)
 		reviewPosition.setEndPoint(movableReviewPosition, "startToStart")
 	endInfo = None
 	if shouldReportFoundText:
