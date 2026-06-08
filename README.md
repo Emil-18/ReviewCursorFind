@@ -1,7 +1,7 @@
 # Review Cursor Find
 
 * NVDA compatibility: 2024.4 and beyond.
-* Download: [Stable version](https://github.com/Emil-18/reviewCursorFind/releases/download/v1.2/reviewCursorFind-1.2.nvda-addon).
+* Download: [Stable version](https://github.com/Emil-18/reviewCursorFind/releases/download/v1.2.1/reviewCursorFind-1.2.1.nvda-addon).
 
 This add-on adds find functionality for the review cursor, like find (NVDA+Control+f) does in browse mode. You can find any text accessible with the review cursor reading commands, (numbpad 6, numbpad 9, etc), before opening the find dialog, for example if the review cursor is in  a document and you open the dialog, the text within that document will be searched.
 You can optionally use regular expressions. [A guide on what they are and how they can be used can be found here.](https://coderpad.io/blog/development/the-complete-guide-to-regular-expressions-regex/)
@@ -46,6 +46,10 @@ All the settings are in the find dialog for the review cursor
 * Move caret check box: If checked, the caret will be moved along with the review cursor when searching.
 
 ## Change log
+
+### v1.2.1
+
+* The add-on will always report "not found" when unable to find text
 
 ### v1.2
 
