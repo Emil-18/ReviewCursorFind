@@ -243,7 +243,7 @@ class FindDialog(SettingsDialog):
 		self.trueRegex.Enable(config.conf["reviewCursorFind"]["regex"])
 		self.trueRegex.Bind(wx.EVT_CHECKBOX, self.onTrueRegexChange)
 		# Translators: A label for a check box
-		label = _("speak the found text, instead of the line where the review cursor ends up")
+		label = _("Speak the found text, instead of the line where the review cursor ends up")
 		self.shouldReportFoundText = helper.addItem(wx.CheckBox(self, label = label))
 		self.shouldReportFoundText.SetValue(config.conf["reviewCursorFind"]["shouldReportFoundText"])
 		self.shouldReportFoundText.Enable(self.regex.GetValue() and self.trueRegex.GetValue())
