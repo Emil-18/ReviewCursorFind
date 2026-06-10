@@ -3,7 +3,7 @@
 `# lesemarkør finn
 
 * NVDA -kompatibilitet: 2024.4 og utover.
-* Last ned: [stabil versjon](https://github.com/emil-18/reviewcursorfind/releases/download/v1.2.1/reviewcursorfind-1.2.1.nvda-addon).
+* Last ned: [stabil versjon](https://github.com/emil-18/reviewcursorfind/releases/download/v1.2.2/reviewcursorfind-1.2.2.nvda-addon).
 
 Dette tillegget legger til finn-funksjonalitet for lesemarkøren, som finn (NVDA+Control+F) gjør i nett modus. Du kan finne hvilken som helst tekst tilgjengelig med lesemarkør navigasjonskommandoene (numerisk 6, numerisk 9, og så vidre), før du opnet dialogen, For eksempel hvis lesemarkøren er i et dokument og du åpner dialogen, vil teksten i det dokumentet bli søkt etter
 Du kan valgfritt bruke regulære uttrykk. [En veiledning om hva de er og hvordan de kan brukes finner du her.](https://coderpad.io/blog/development/the-complete-guide-to-regular-expressions-regex/)
@@ -46,6 +46,10 @@ Alle innstillingene er i finn dialogboksen for lesemarkør
 * Flytt innsettingspunktet avkryssingsboks: Hvis denne er krysset av, flyttes innsettingspunktet med lesemarkøren når du søker
 
 ## forandringslog
+
+### v1.2.2
+
+* Når "Støtt alle regulæruttrykk" innstillingen er på, vil tillegget fungere i flere situasjoner
 
 ### v1.2.1
 
